@@ -2,35 +2,50 @@ use macroquad::prelude::*;
 
 #[derive(Default)]
 pub struct Button {
+    /// The Buttons x coordinate in pixels
     pub x: f32,
+    /// The Buttons y coordinate in pixels
     pub y: f32,
+    /// The Buttons width in pixels
     pub w: f32,
+    /// The Buttons height in pixels
     pub h: f32,
+    /// The color of the Buttons text
     pub text_col: Color,
+    /// The normal background color of the Button
     pub bg: Color,
+    /// The background color of the Button when hovered
     pub hover_col: Color,
+    /// The font size of the Button text
     pub text_size: f32,
+    /// The text displayed on the Button
     pub text: String,
+    /// The alignment of the Buttons text
     pub text_alignment: TextAlignment,
+    /// The Buttons border thickness
     pub border_thickness: f32,
+    /// The Buttons border color
     pub border_col: Color,
+    /// The Buttons trigger mode
+    pub trigger: TriggerMode,
     is_clicked: bool,
 }
 
 #[derive(Default)]
 pub struct ButtonBuilder {
-    pub x: f32,
-    pub y: f32,
-    pub w: f32,
-    pub h: f32,
-    pub text_col: Color,
-    pub bg: Color,
-    pub hover_col: Color,
-    pub text_size: f32,
-    pub border_thickness: f32,
-    pub border_col: Color,
-    pub text: String,
-    pub text_alignment: TextAlignment,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    text_col: Color,
+    bg: Color,
+    hover_col: Color,
+    text_size: f32,
+    border_thickness: f32,
+    border_col: Color,
+    text: String,
+    text_alignment: TextAlignment,
+    trigger: TriggerMode,
 }
 
 impl Button {
@@ -49,18 +64,22 @@ impl Button {
     }
 
     pub fn is_left_clicked(&mut self) -> bool {
-        if self.is_hovered()
-            && macroquad::input::is_mouse_button_down(macroquad::input::MouseButton::Left) {
-            return true;
+        if self.is_hovered() {
+            match self.trigger {
+                TriggerMode::OnPress => return macroquad::input::is_mouse_button_down(macroquad::input::MouseButton::Left),
+                TriggerMode::OnRelease => return macroquad::input::is_mouse_button_released(macroquad::input::MouseButton::Left)
+            }
         }
         self.is_clicked = false;
         false
     }
 
     pub fn is_right_clicked(&mut self) -> bool {
-        if self.is_hovered()
-            && macroquad::input::is_mouse_button_down(macroquad::input::MouseButton::Right) {
-            return true;
+        if self.is_hovered() {
+            match self.trigger {
+                TriggerMode::OnPress => return macroquad::input::is_mouse_button_down(macroquad::input::MouseButton::Right),
+                TriggerMode::OnRelease => return macroquad::input::is_mouse_button_released(macroquad::input::MouseButton::Right)
+            }
         }
         self.is_clicked = false;
         false
@@ -141,6 +160,11 @@ impl ButtonBuilder {
         self
     }
 
+    pub fn set_trigger_mode(mut self, mode: TriggerMode) -> Self {
+        self.trigger = mode;
+        self
+    }
+
     pub fn build(self) -> Button {
         Button {
             x: self.x,
@@ -156,6 +180,7 @@ impl ButtonBuilder {
             border_thickness: self.border_thickness,
             border_col: self.border_col,
             is_clicked: false,
+            trigger: self.trigger,
         }
     }
 }
@@ -166,4 +191,11 @@ pub enum TextAlignment {
     Center,
     Left,
     Right
+}
+
+#[derive(Default)]
+pub enum TriggerMode {
+    #[default]
+    OnRelease,
+    OnPress,
 }
