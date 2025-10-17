@@ -65,6 +65,7 @@ pub struct Graph {
     data: Vec<Point>,
     line_thickness: f32,
     line_type: LineType,
+    color: Color,
 }
 
 impl Graph {
@@ -80,9 +81,10 @@ impl Graph {
         self
     }
 
-    pub fn set_look(mut self, line_thickness: f32, line_type: LineType) -> Self {
+    pub fn set_look(mut self, line_thickness: f32, line_type: LineType, color: Color) -> Self {
         self.line_type = line_type;
         self.line_thickness = line_thickness;
+        self.color = color;
         self
     }
 }
@@ -208,13 +210,22 @@ impl Canvas {
             },
         );
 
+        let mut point1x = 0.0;
+        let mut point2x = 0.0;
+        let mut point1y = 0.0;
+        let mut point2y = 0.0;
+        let mut write_to_second = false;
+        let x_scaling =
+            (self.x + self.w - measure_text(&self.x_axis.name, None, 20, 1.0).width - 34.0)
+                / self.x_axis.range as f32;
+        let y_scaling = (self.y + self.h - 20.0) * 0.95 / self.y_axis.range as f32;
+
         for graph in &self.graphs {
             for point in &graph.data {
-                let scaling = (self.x + self.w - measure_text(&self.x_axis.name, None, 20, 1.0).width - 34.0) / self.x_axis.range as f32;
                 match point.shape {
                     PointShape::Circle => draw_circle(
-                        self.x + 10.0 + (point.x * scaling),
-                        self.y + self.h - 20.0 - point.y,
+                        self.x + 10.0 + (point.x * x_scaling),
+                        self.y + self.h - 20.0 - (point.y * y_scaling),
                         point.size,
                         point.col1,
                     ),
@@ -222,6 +233,32 @@ impl Canvas {
                     PointShape::Square => {}
                     PointShape::Triangle => {}
                 }
+                draw_text_ex(
+                    &point.label.clone().unwrap_or("".to_string()),
+                    self.x + 10.0 + (point.x * x_scaling) + 5.0,
+                    self.y + self.h - 20.0 - (point.y * y_scaling),
+                    TextParams {
+                        color: self.x_axis.color,
+                        font_size: 15,
+                        ..Default::default()
+                    },
+                );
+                if !write_to_second {
+                    point1x = point.x;
+                    point1y = point.y;
+                } else {
+                    point2x = point.x;
+                    point2y = point.y;
+                }
+                draw_line(
+                    self.x + 10.0 + (point1x * x_scaling),
+                    self.y + self.h - 20.0 - (point1y * y_scaling),
+                    self.x + 10.0 + (point2x * x_scaling),
+                    self.y + self.h - 20.0 - (point2y * y_scaling),
+                    graph.line_thickness,
+                    graph.color,
+                );
+                write_to_second = !write_to_second;
             }
         }
     }

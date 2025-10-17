@@ -7,12 +7,12 @@ mod graphing;
 async fn main() {
     let mut points: Vec<graphing::Point> = Vec::new();
 
-    for i in 0..50 {
+    for i in 0..100 {
         points.push(
             graphing::Point::with_value(i as f32)
                 .set_label(&format!("TP {}", i))
-                .set_coordinates(1.0 + i as f32, macroquad::rand::gen_range(10.0, 50.0))
-                .set_size(2.0)
+                .set_coordinates(1.0 + i as f32, macroquad::rand::gen_range(0.0, 10.0) + i as f32)
+                .set_size(3.0)
                 .set_colors(
                     Color::new(1.0, 0.2, 0.2, 1.0),
                     Color::new(0.8, 0.8, 0.8, 1.0),
@@ -34,9 +34,9 @@ async fn main() {
         .add_graph(
             graphing::Graph::new("A")
                 .set_data(points)
-                .set_look(1.0, graphing::LineType::Solid),
+                .set_look(1.0, graphing::LineType::Solid, Color::new(0.6, 0.6, 0.6, 1.0)),
         )
-        .set_size(750.0, 500.0);
+        .set_size(1500.0, 750.0);
 
     loop {
         canvas.draw();
