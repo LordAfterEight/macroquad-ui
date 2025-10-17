@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Button {
     /// The Buttons x coordinate in pixels
     pub x: f32,
@@ -31,28 +31,11 @@ pub struct Button {
     is_clicked: bool,
 }
 
-#[derive(Default)]
-pub struct ButtonBuilder {
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-    text_col: Color,
-    bg: Color,
-    hover_col: Color,
-    text_size: f32,
-    border_thickness: f32,
-    border_col: Color,
-    text: String,
-    text_alignment: TextAlignment,
-    trigger: TriggerMode,
-}
-
 impl Button {
     /// Creates a Builder that can be used to build a button by giving it colors, text, position,
     /// etc.
-    pub fn builder() -> ButtonBuilder {
-        ButtonBuilder::default()
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn is_hovered(&self) -> bool {
@@ -85,33 +68,6 @@ impl Button {
         false
     }
 
-    /// This draws the button
-    pub fn update(&mut self) {
-        match self.is_hovered() {
-            true => {
-                match self.is_clicked {
-                    true => {
-                    },
-                    false => {
-                        draw_rectangle(self.x, self.y, self.w, self.h, self.hover_col);
-                    }
-                }
-            },
-            false => {
-                draw_rectangle(self.x, self.y, self.w, self.h, self.bg);
-            }
-        }
-        draw_text_ex(&self.text, self.x, self.y, TextParams {
-            color: self.text_col,
-            ..Default::default()
-        });
-        if self.border_thickness > 0.0 {
-            draw_rectangle_lines(self.x, self.y, self.w, self.h, self.border_thickness, self.border_col);
-        }
-    }
-}
-
-impl ButtonBuilder {
     pub fn set_position(mut self, x: f32, y: f32) -> Self {
         self.x = x;
         self.y = y;
@@ -165,27 +121,33 @@ impl ButtonBuilder {
         self
     }
 
-    pub fn build(self) -> Button {
-        Button {
-            x: self.x,
-            y: self.y,
-            w: self.w,
-            h: self.h,
-            text_col: self.text_col,
-            hover_col: self.hover_col,
-            bg: self.bg,
-            text: self.text,
-            text_size: self.text_size,
-            text_alignment: self.text_alignment,
-            border_thickness: self.border_thickness,
-            border_col: self.border_col,
-            is_clicked: false,
-            trigger: self.trigger,
+    /// This draws the button
+    pub fn update(&mut self) {
+        match self.is_hovered() {
+            true => {
+                match self.is_clicked {
+                    true => {
+                    },
+                    false => {
+                        draw_rectangle(self.x, self.y, self.w, self.h, self.hover_col);
+                    }
+                }
+            },
+            false => {
+                draw_rectangle(self.x, self.y, self.w, self.h, self.bg);
+            }
+        }
+        draw_text_ex(&self.text, self.x, self.y, TextParams {
+            color: self.text_col,
+            ..Default::default()
+        });
+        if self.border_thickness > 0.0 {
+            draw_rectangle_lines(self.x, self.y, self.w, self.h, self.border_thickness, self.border_col);
         }
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub enum TextAlignment {
     #[default]
     Center,
@@ -193,7 +155,7 @@ pub enum TextAlignment {
     Right
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub enum TriggerMode {
     #[default]
     OnRelease,
