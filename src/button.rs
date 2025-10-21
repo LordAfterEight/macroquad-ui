@@ -13,7 +13,7 @@ pub struct Button {
     /// The color of the Buttons text
     pub text_col: Color,
     /// The normal background color of the Button
-    pub bg: Color,
+    pub bg_col: Color,
     /// The background color of the Button when hovered
     pub hover_col: Color,
     /// The font size of the Button text
@@ -101,7 +101,7 @@ impl Button {
     }
 
     pub fn set_bg_color(mut self, col: Color) -> Self {
-        self.bg = col;
+        self.bg_col = col;
         self
     }
 
@@ -134,7 +134,7 @@ impl Button {
                 }
             },
             false => {
-                draw_rectangle(self.x, self.y, self.w, self.h, self.bg);
+                draw_rectangle(self.x, self.y, self.w, self.h, self.bg_col);
             }
         }
         draw_text_ex(&self.text, self.x, self.y, TextParams {
