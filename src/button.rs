@@ -16,10 +16,12 @@ pub struct Button {
     pub bg_col: Color,
     /// The background color of the Button when hovered
     pub hover_col: Color,
-    /// The font size of the Button text
-    pub text_size: f32,
+    /// The background color of the Button when pressed
+    pub press_col: Color,
     /// The text displayed on the Button
     pub text: String,
+    /// The size of the Button text
+    pub text_size: u16,
     /// The alignment of the Buttons text
     pub text_alignment: TextAlignment,
     /// The Buttons border thickness
@@ -27,8 +29,20 @@ pub struct Button {
     /// The Buttons border color
     pub border_col: Color,
     /// The Buttons trigger mode
-    pub trigger: TriggerMode,
+    pub trigger_mode: TriggerMode,
+    /// The mouse button that triggers a Button
+    pub trigger_button: MouseButtons,
     is_clicked: bool,
+    /// Size of the inside shadow. A value of 0 disables it
+    pub inside_shadow_size: u8,
+}
+
+#[derive(Default, Debug)]
+pub enum TriggerButton {
+    #[default]
+    LMB,
+    RMB,
+    MMB,
 }
 
 impl Button {
@@ -48,9 +62,17 @@ impl Button {
 
     pub fn is_left_clicked(&mut self) -> bool {
         if self.is_hovered() {
-            match self.trigger {
-                TriggerMode::OnPress => return macroquad::input::is_mouse_button_down(macroquad::input::MouseButton::Left),
-                TriggerMode::OnRelease => return macroquad::input::is_mouse_button_released(macroquad::input::MouseButton::Left)
+            match self.trigger_mode {
+                TriggerMode::OnPress => {
+                    return macroquad::input::is_mouse_button_down(
+                        macroquad::input::MouseButton::Left,
+                    );
+                }
+                TriggerMode::OnRelease => {
+                    return macroquad::input::is_mouse_button_released(
+                        macroquad::input::MouseButton::Left,
+                    );
+                }
             }
         }
         self.is_clicked = false;
@@ -59,9 +81,17 @@ impl Button {
 
     pub fn is_right_clicked(&mut self) -> bool {
         if self.is_hovered() {
-            match self.trigger {
-                TriggerMode::OnPress => return macroquad::input::is_mouse_button_down(macroquad::input::MouseButton::Right),
-                TriggerMode::OnRelease => return macroquad::input::is_mouse_button_released(macroquad::input::MouseButton::Right)
+            match self.trigger_mode {
+                TriggerMode::OnPress => {
+                    return macroquad::input::is_mouse_button_down(
+                        macroquad::input::MouseButton::Right,
+                    );
+                }
+                TriggerMode::OnRelease => {
+                    return macroquad::input::is_mouse_button_released(
+                        macroquad::input::MouseButton::Right,
+                    );
+                }
             }
         }
         self.is_clicked = false;
@@ -85,7 +115,7 @@ impl Button {
         self
     }
 
-    pub fn set_text_size(mut self, size: f32) -> Self {
+    pub fn set_text_size(mut self, size: u16) -> Self {
         self.text_size = size;
         self
     }
@@ -105,6 +135,11 @@ impl Button {
         self
     }
 
+    pub fn set_press_color(mut self, col: Color) -> Self {
+        self.press_col = col;
+        self
+    }
+
     pub fn set_border(mut self, thickness: f32, col: Color) -> Self {
         self.border_thickness = thickness;
         self.border_col = col;
@@ -117,32 +152,66 @@ impl Button {
     }
 
     pub fn set_trigger_mode(mut self, mode: TriggerMode) -> Self {
-        self.trigger = mode;
+        self.trigger_mode = mode;
+        self
+    }
+
+    pub fn set_trigger_button(mut self, button: MouseButton) -> Self {
+        self.trigger_button = MouseButtons(button);
+        self
+    }
+
+    pub fn inside_shadow_size(mut self, size: u8) -> Self {
+        self.inside_shadow_size = size;
         self
     }
 
     /// This draws the button
     pub fn update(&mut self) {
         match self.is_hovered() {
-            true => {
-                match self.is_clicked {
-                    true => {
-                    },
-                    false => {
-                        draw_rectangle(self.x, self.y, self.w, self.h, self.hover_col);
-                    }
+            true => match is_mouse_button_down(self.trigger_button.0) {
+                true => {
+                    draw_rectangle(self.x, self.y, self.w, self.h, self.press_col);
+                }
+                false => {
+                    draw_rectangle(self.x, self.y, self.w, self.h, self.hover_col);
                 }
             },
             false => {
                 draw_rectangle(self.x, self.y, self.w, self.h, self.bg_col);
             }
         }
-        draw_text_ex(&self.text, self.x, self.y, TextParams {
-            color: self.text_col,
-            ..Default::default()
-        });
+        if self.inside_shadow_size > 0 {
+            for i in 0..self.inside_shadow_size {
+                draw_rectangle_lines(
+                    self.x + i as f32,
+                    self.y + i as f32,
+                    self.w - (i * 2) as f32,
+                    self.h - (i * 2) as f32,
+                    1.0,
+                    Color::new(0.1, 0.1, 0.1, 1.0 - (i as f32 / self.inside_shadow_size as f32)),
+                );
+            }
+        }
+        draw_text_ex(
+            &self.text,
+            self.x + 4.0,
+            self.y + (measure_text(&self.text, None, self.text_size, 1.0).height + self.h) / 2.0,
+            TextParams {
+                font_size: self.text_size,
+                color: self.text_col,
+                ..Default::default()
+            },
+        );
         if self.border_thickness > 0.0 {
-            draw_rectangle_lines(self.x, self.y, self.w, self.h, self.border_thickness, self.border_col);
+            draw_rectangle_lines(
+                self.x,
+                self.y,
+                self.w,
+                self.h,
+                self.border_thickness,
+                self.border_col,
+            );
         }
     }
 }
@@ -152,7 +221,7 @@ pub enum TextAlignment {
     #[default]
     Center,
     Left,
-    Right
+    Right,
 }
 
 #[derive(Default, Debug)]
@@ -160,4 +229,13 @@ pub enum TriggerMode {
     #[default]
     OnRelease,
     OnPress,
+}
+
+#[derive(Debug)]
+pub struct MouseButtons(pub MouseButton);
+
+impl Default for MouseButtons {
+    fn default() -> Self {
+        Self(MouseButton::Left)
+    }
 }

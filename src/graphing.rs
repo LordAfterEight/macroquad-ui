@@ -13,12 +13,6 @@ pub struct Point {
 }
 
 impl Point {
-    pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
-    }
-
     pub fn with_value(value: f32) -> Self {
         Self {
             value,
@@ -61,8 +55,8 @@ impl Point {
 
 #[derive(Default, Debug)]
 pub struct Graph {
-    name: String,
-    data: Vec<Point>,
+    pub name: String,
+    pub data: Vec<Point>,
     line_thickness: f32,
     line_type: LineType,
     color: Color,
@@ -76,8 +70,8 @@ impl Graph {
         }
     }
 
-    pub fn set_data(mut self, data: Vec<Point>) -> Self {
-        self.data = data;
+    pub fn set_data(mut self, data: impl IntoIterator<Item = Point>) -> Self {
+        self.data = data.into_iter().collect();
         self
     }
 
@@ -91,9 +85,9 @@ impl Graph {
 
 #[derive(Default, Debug)]
 pub struct Axis {
-    name: String,
-    range: u64,
-    color: Color,
+    pub name: String,
+    pub range: u64,
+    pub color: Color,
 }
 
 impl Axis {
@@ -210,6 +204,7 @@ impl Canvas {
             },
         );
 
+        let mut prev_point_y = 0.0;
         let mut point1x = 0.0;
         let mut point2x = 0.0;
         let mut point1y = 0.0;
@@ -222,23 +217,13 @@ impl Canvas {
 
         for graph in &self.graphs {
             for point in &graph.data {
-                match point.shape {
-                    PointShape::Circle => draw_circle(
-                        self.x + 10.0 + (point.x * x_scaling),
-                        self.y + self.h - 20.0 - (point.y * y_scaling),
-                        point.size,
-                        point.col1,
-                    ),
-                    PointShape::Dot => {}
-                    PointShape::Square => {}
-                    PointShape::Triangle => {}
-                }
+                let y_offset = if ((prev_point_y - point.y) > 5.0) || ((point.y - prev_point_y) < 5.0) { 15.0 } else { 0.0 };
                 draw_text_ex(
                     &point.label.clone().unwrap_or("".to_string()),
                     self.x + 10.0 + (point.x * x_scaling) + 5.0,
-                    self.y + self.h - 20.0 - (point.y * y_scaling),
+                    self.y + self.h - 20.0 - (point.y * y_scaling) - y_offset,
                     TextParams {
-                        color: self.x_axis.color,
+                        color: point.col2,
                         font_size: 15,
                         ..Default::default()
                     },
@@ -258,7 +243,21 @@ impl Canvas {
                     graph.line_thickness,
                     graph.color,
                 );
+
+                match point.shape {
+                    PointShape::Circle => draw_circle(
+                        self.x + 10.0 + (point.x * x_scaling),
+                        self.y + self.h - 20.0 - (point.y * y_scaling),
+                        point.size,
+                        point.col1,
+                    ),
+                    PointShape::Dot => {}
+                    PointShape::Square => {}
+                    PointShape::Triangle => {}
+                }
+
                 write_to_second = !write_to_second;
+                prev_point_y = point.y;
             }
         }
     }
